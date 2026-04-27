@@ -33,7 +33,15 @@ runs:
         sudo apt-get install -y snapd
         sudo systemctl enable snapd
         sudo systemctl start snapd
-        sudo snap refresh snapd
+        # Wait for snapd socket to be ready
+        for i in {1..30}; do
+          [ -S /run/snapd.socket ] && break
+          sleep 1
+        done
+        # Install snapd snap to get the latest version
+        sudo snap install snapd
+        # Wait a moment for snapd to settle
+        sleep 5
         sudo snap install maas --channel=${{ inputs.channel }}
         sudo snap install maas-test-db --channel=${{ inputs.channel }}
     - name: Fetch MAAS database dump
