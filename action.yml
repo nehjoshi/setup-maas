@@ -42,6 +42,8 @@ runs:
         sudo snap install snapd
         # Wait a moment for snapd to settle
         sleep 5
+        # Install core26 snap base (required by maas)
+        sudo snap install core26 --edge
         sudo snap install maas --channel=${{ inputs.channel }}
         sudo snap install maas-test-db --channel=${{ inputs.channel }}
     - name: Fetch MAAS database dump
