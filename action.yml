@@ -39,9 +39,9 @@ runs:
           sleep 1
         done
         # Install snapd snap to get the latest version
-        sudo snap install snapd
-        # Wait a moment for snapd to settle
-        sleep 5
+        sudo snap install snapd --beta
+        # Wait for snap system to be ready
+        sudo snap wait system seed.loaded
         # Install core26 snap base (required by maas)
         sudo snap install core26 --edge
         sudo snap install maas --channel=${{ inputs.channel }}
@@ -59,9 +59,10 @@ runs:
         sudo sed -i "s/dynamic_shared_memory_type = posix/dynamic_shared_memory_type = sysv/" /var/snap/maas-test-db/common/postgres/data/postgresql.conf
         sudo snap restart maas-test-db
         sudo mv maasdb.dump /var/snap/maas-test-db/common/maasdb.dump
-        sudo snap run --shell maas-test-db.psql -c 'db-dump restore /var/snap/maas-test-db/common/maasdb.dump maassampledata'
-        sudo maas init region+rack --maas-url=${{inputs.maas-url}} --database-uri maas-test-db:///
-        sudo sed -i "s/database_name: maasdb/database_name: maassampledata/" /var/snap/maas/current/regiond.conf
+        # Restore the database dump
+        sudo snap run maas-test-db pg_restore --create --no-owner --no-privileges -d postgres /var/snap/maas-test-db/common/maasdb.dump
+        # Initialize MAAS with the restored database
+        sudo maas init region+rack --maas-url=${{inputs.maas-url}} --database-uri maas-test-db:///maassampledata
         sudo snap restart maas
     - name: Set up MAAS
       if: inputs.use-maasdb-dump == 'false'
