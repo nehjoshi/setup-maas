@@ -58,12 +58,7 @@ runs:
         set -x
         sudo sed -i "s/dynamic_shared_memory_type = posix/dynamic_shared_memory_type = sysv/" /var/snap/maas-test-db/common/postgres/data/postgresql.conf
         sudo snap restart maas-test-db
-        # Wait for database to be ready
-        sleep 10
         sudo mv maasdb.dump /var/snap/maas-test-db/common/maasdb.dump
-        # Check if dump exists and is readable
-        sudo ls -lh /var/snap/maas-test-db/common/maasdb.dump
-        # Restore the database dump
         sudo snap run --shell maas-test-db.psql -c 'db-dump restore /var/snap/maas-test-db/common/maasdb.dump maassampledata'
         sudo maas init region+rack --maas-url=${{inputs.maas-url}} --database-uri maas-test-db:///
         sudo sed -i "s/database_name: maasdb/database_name: maassampledata/" /var/snap/maas/current/regiond.conf
