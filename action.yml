@@ -46,6 +46,7 @@ runs:
         repository: canonical/maas
         ref: ${{ steps.resolve-ref.outputs.ref }}
         fetch-depth: 0
+        path: maas-source
 
     - name: Setup LXD
       uses: canonical/setup-lxd@v1
@@ -59,7 +60,7 @@ runs:
         sudo snap install snapcraft --classic
         sudo snap refresh snapd
         sudo snap install --candidate core26
-        cd "$GITHUB_WORKSPACE"
+        cd "$GITHUB_WORKSPACE/maas-source"
         make snap
         make snap-clean
 
@@ -68,7 +69,7 @@ runs:
       shell: bash
       run: |
         set -x
-        cd "$GITHUB_WORKSPACE"
+        cd "$GITHUB_WORKSPACE/maas-source"
         lxc launch ubuntu:resolute maas-backend
         lxc exec maas-backend -- cloud-init status --wait
         lxc exec maas-backend -- snap install snapd --beta
