@@ -30,7 +30,7 @@ runs:
       run: |
         set -x
         sudo apt-get update
-        sudo apt-get install -y snapd squashfs-tools python3
+        sudo apt-get install -y snapd
         sudo systemctl enable snapd
         sudo systemctl start snapd
         # Wait for snapd socket to be ready
@@ -43,23 +43,8 @@ runs:
         # Wait for snap system to be ready
         sudo snap wait system seed.loaded
         # Install core26 snap base (required by maas)
-        sudo snap install core26 --edge
-        # Install MAAS snap with a workaround for missing python3 symlink in the snap package.
-        # The maas snap bundles python3 libraries via stage-packages but omits the base
-        # `python3` package, so $SNAP/usr/bin/python3 (unversioned) is absent and the
-        # install hook's "#!/usr/bin/env python3" shebang cannot be resolved.
-        # Fix: download the snap, inject the symlink, repack, install --dangerous.
-        # TODO: Remove once the maas snap adds `python3` to its stage-packages.
-        MAAS_DL_DIR=$(mktemp -d)
-        sudo snap download maas --channel=${{ inputs.channel }} --target-directory="$MAAS_DL_DIR"
-        pushd "$MAAS_DL_DIR"
-        sudo unsquashfs maas_*.snap
-        # Inject the system python3 binary into the snap so the install hook can find it.
-        # TODO: Remove once the maas snap ships python3 in $SNAP/usr/bin/.
-        sudo cp "$(which python3)" squashfs-root/usr/bin/python3
-        sudo snap pack squashfs-root "$MAAS_DL_DIR"
-        sudo snap install --dangerous "$MAAS_DL_DIR"/maas_*.snap
-        popd
+        sudo snap install core26 --channel=cloud-init/stable
+        sudo snap install maas --channel=${{ inputs.channel }}
         sudo snap install maas-test-db --channel=${{ inputs.channel }}
     - name: Fetch MAAS database dump
       if: inputs.use-maasdb-dump == 'true'
