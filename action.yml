@@ -30,7 +30,7 @@ runs:
       run: |
         set -x
         sudo apt-get update
-        sudo apt-get install -y snapd squashfs-tools
+        sudo apt-get install -y snapd squashfs-tools python3
         sudo systemctl enable snapd
         sudo systemctl start snapd
         # Wait for snapd socket to be ready
@@ -54,18 +54,9 @@ runs:
         sudo snap download maas --channel=${{ inputs.channel }} --target-directory="$MAAS_DL_DIR"
         pushd "$MAAS_DL_DIR"
         sudo unsquashfs maas_*.snap
-        # Determine whether python3 is missing or is a broken absolute symlink
-        if sudo test -L squashfs-root/usr/bin/python3; then
-          LINK_TARGET=$(sudo readlink squashfs-root/usr/bin/python3)
-          if [[ "$LINK_TARGET" == /* ]]; then
-            echo "Fixing absolute python3 symlink: $LINK_TARGET -> $(basename "$LINK_TARGET")"
-            sudo ln -sf "$(basename "$LINK_TARGET")" squashfs-root/usr/bin/python3
-          fi
-        elif ! sudo test -e squashfs-root/usr/bin/python3; then
-          PYTHON3_BIN=$(sudo ls squashfs-root/usr/bin/python3.* 2>/dev/null | sort -V | tail -1 | xargs -r basename)
-          echo "Creating missing python3 symlink -> $PYTHON3_BIN"
-          [ -n "$PYTHON3_BIN" ] && sudo ln -sf "$PYTHON3_BIN" squashfs-root/usr/bin/python3
-        fi
+        # Inject the system python3 binary into the snap so the install hook can find it.
+        # TODO: Remove once the maas snap ships python3 in $SNAP/usr/bin/.
+        sudo cp "$(which python3)" squashfs-root/usr/bin/python3
         sudo snap pack squashfs-root --output-dir="$MAAS_DL_DIR"
         sudo snap install --dangerous "$MAAS_DL_DIR"/maas_*.snap
         popd
