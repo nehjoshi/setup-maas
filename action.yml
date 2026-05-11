@@ -58,7 +58,7 @@ runs:
         set -x
         sudo snap install snapcraft --classic
         sudo snap refresh snapd
-        sudo snap install --edge core26
+        sudo snap install --candidate core26
         cd "$GITHUB_WORKSPACE"
         make snap
         make snap-clean
@@ -69,11 +69,11 @@ runs:
       run: |
         set -x
         cd "$GITHUB_WORKSPACE"
-        lxc launch ubuntu-daily:resolute maas-backend
+        lxc launch ubuntu:resolute maas-backend
         lxc exec maas-backend -- cloud-init status --wait
         lxc exec maas-backend -- snap install snapd --beta
         lxc exec maas-backend -- snap wait system seed.loaded
-        lxc exec maas-backend -- snap install --edge core26
+        lxc exec maas-backend -- snap install --candidate core26
         lxc file push *.snap maas-backend/maas.snap
         lxc file push utilities/connect-snap-interfaces maas-backend/connect-snap-interfaces
         lxc exec maas-backend -- snap install maas-test-db --channel=${{ inputs.channel }}
