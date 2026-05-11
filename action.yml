@@ -30,7 +30,7 @@ runs:
       run: |
         set -x
         sudo apt-get update
-        sudo apt-get install -y python3 snapd
+        sudo apt-get install -y snapd squashfs-tools
         sudo systemctl enable snapd
         sudo systemctl start snapd
         # Wait for snapd socket to be ready
@@ -44,10 +44,31 @@ runs:
         sudo snap wait system seed.loaded
         # Install core26 snap base (required by maas)
         sudo snap install core26 --edge
-        # Bind-mount python3 into core26 base so the maas snap install hook can find it
-        # TODO: Remove once core26 ships python3
-        sudo mount --bind /usr/bin/python3 /snap/core26/current/usr/bin/python3
-        sudo snap install maas --channel=${{ inputs.channel }}
+        # Install MAAS snap with a workaround for missing python3 symlink in the snap package.
+        # The maas snap bundles python3 libraries via stage-packages but omits the base
+        # `python3` package, so $SNAP/usr/bin/python3 (unversioned) is absent and the
+        # install hook's "#!/usr/bin/env python3" shebang cannot be resolved.
+        # Fix: download the snap, inject the symlink, repack, install --dangerous.
+        # TODO: Remove once the maas snap adds `python3` to its stage-packages.
+        MAAS_DL_DIR=$(mktemp -d)
+        sudo snap download maas --channel=${{ inputs.channel }} --target-directory="$MAAS_DL_DIR"
+        pushd "$MAAS_DL_DIR"
+        unsquashfs maas_*.snap
+        # Determine whether python3 is missing or is a broken absolute symlink
+        if [ -L squashfs-root/usr/bin/python3 ]; then
+          LINK_TARGET=$(readlink squashfs-root/usr/bin/python3)
+          if [[ "$LINK_TARGET" == /* ]]; then
+            echo "Fixing absolute python3 symlink: $LINK_TARGET -> $(basename "$LINK_TARGET")"
+            ln -sf "$(basename "$LINK_TARGET")" squashfs-root/usr/bin/python3
+          fi
+        elif [ ! -e squashfs-root/usr/bin/python3 ]; then
+          PYTHON3_BIN=$(ls squashfs-root/usr/bin/python3.* 2>/dev/null | sort -V | tail -1 | xargs -r basename)
+          echo "Creating missing python3 symlink -> $PYTHON3_BIN"
+          [ -n "$PYTHON3_BIN" ] && ln -sf "$PYTHON3_BIN" squashfs-root/usr/bin/python3
+        fi
+        snap pack squashfs-root --output-dir="$MAAS_DL_DIR"
+        sudo snap install --dangerous "$MAAS_DL_DIR"/maas_*.snap
+        popd
         sudo snap install maas-test-db --channel=${{ inputs.channel }}
     - name: Fetch MAAS database dump
       if: inputs.use-maasdb-dump == 'true'
