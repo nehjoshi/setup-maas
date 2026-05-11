@@ -20,7 +20,7 @@ inputs:
   maasdb-dump-url:
     description: "URL to the MAAS database dump"
     required: false
-    default: "https://github.com/canonical/maas-ui-testing/raw/main/db/maasdb-22.04-master-100.dump"
+    default: "https://github.com/canonical/maas-ui-testing/raw/main/db/maasdb-26.04-master-100.dump"
 
 runs:
   using: "composite"
