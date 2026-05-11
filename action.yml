@@ -53,16 +53,6 @@ runs:
       with:
         channel: 5.21/stable
 
-    # TODO: remove once requirements are fixed
-    - name: Patch docs requirements (pin Twisted / add service-identity)
-      shell: bash
-      run: |
-        REQS="$GITHUB_WORKSPACE/maas-source/docs/requirements.txt"
-        # service-identity is required by Twisted 26+ but not listed upstream
-        echo "service-identity" >> "$REQS"
-        # Also pin Twisted so future releases don't break this again
-        echo "Twisted<27" >> "$REQS"
-
     - name: Build MAAS snap
       shell: bash
       run: |
