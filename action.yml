@@ -57,7 +57,7 @@ runs:
         # Inject the system python3 binary into the snap so the install hook can find it.
         # TODO: Remove once the maas snap ships python3 in $SNAP/usr/bin/.
         sudo cp "$(which python3)" squashfs-root/usr/bin/python3
-        sudo snap pack squashfs-root --output-dir="$MAAS_DL_DIR"
+        sudo snap pack squashfs-root "$MAAS_DL_DIR"
         sudo snap install --dangerous "$MAAS_DL_DIR"/maas_*.snap
         popd
         sudo snap install maas-test-db --channel=${{ inputs.channel }}
