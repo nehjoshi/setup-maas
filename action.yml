@@ -31,6 +31,7 @@ runs:
         set -x
         sudo apt-get update
         sudo apt-get install -y snapd
+        sudo apt-get install -y python3
         sudo systemctl enable snapd
         sudo systemctl start snapd
         # Wait for snapd socket to be ready
