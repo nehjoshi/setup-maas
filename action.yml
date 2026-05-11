@@ -44,6 +44,9 @@ runs:
         sudo snap wait system seed.loaded
         # Install core26 snap base (required by maas)
         sudo snap install core26 --edge
+        # Bind-mount python3 into core26 base so the maas snap install hook can find it
+        # TODO: Remove once core26 ships python3
+        sudo mount --bind /usr/bin/python3 /snap/core26/current/usr/bin/python3
         sudo snap install maas --channel=${{ inputs.channel }}
         sudo snap install maas-test-db --channel=${{ inputs.channel }}
     - name: Fetch MAAS database dump
