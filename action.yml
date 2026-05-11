@@ -81,6 +81,9 @@ runs:
         lxc exec maas-backend -- /connect-snap-interfaces
         MAAS_IP=$(lxc query /1.0/containers/maas-backend/state | jq -r '.network.eth0.addresses[0].address')
         echo "maas_ip=$MAAS_IP" >> "$GITHUB_OUTPUT"
+        # Forward localhost:5240 → container:5240 so callers can use http://localhost:5240/MAAS
+        sudo apt-get install -y socat
+        sudo socat TCP-LISTEN:5240,fork,reuseaddr TCP:${MAAS_IP}:5240 &
 
     - name: Fetch MAAS database dump
       if: inputs.use-maasdb-dump == 'true'
