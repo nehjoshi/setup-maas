@@ -25,16 +25,12 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set up python3
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
     - name: Install MAAS
       shell: bash
       run: |
         set -x
         sudo apt-get update
-        sudo apt-get install -y snapd
+        sudo apt-get install -y python3 snapd
         sudo systemctl enable snapd
         sudo systemctl start snapd
         # Wait for snapd socket to be ready
