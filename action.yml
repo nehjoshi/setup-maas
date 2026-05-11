@@ -25,19 +25,16 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up python3
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
     - name: Install MAAS
       shell: bash
       run: |
         set -x
         sudo apt-get update
         sudo apt-get install -y snapd
-        sudo apt-get install -y python3 python3-minimal
-        # Ensure /usr/bin/python3 symlink exists for snap hook environments
-        if [ ! -x /usr/bin/python3 ]; then
-          PYTHON3_BIN=$(find /usr/bin -maxdepth 1 -name 'python3.[0-9]*' -type f | sort | tail -1)
-          [ -n "$PYTHON3_BIN" ] && sudo ln -sf "$PYTHON3_BIN" /usr/bin/python3
-        fi
-        python3 --version
         sudo systemctl enable snapd
         sudo systemctl start snapd
         # Wait for snapd socket to be ready
