@@ -57,10 +57,15 @@ runs:
       shell: bash
       run: |
         set -x
-        sed -i 's/ --recursive-unlink//g' "$GITHUB_WORKSPACE/maas-source/src/maasui/Makefile"
         sudo snap install snapcraft --classic
-        sudo snap install core26
+        sudo snap refresh snapd
+        sudo snap install --candidate core26 
         cd "$GITHUB_WORKSPACE/maas-source"
+
+        git submodule update --init --remote src/maasui/src
+        echo "Pinned maas-ui submodule to: $(git -C src/maasui/src rev-parse HEAD)"
+
+        sed -i 's/ --recursive-unlink//g' src/maasui/Makefile
         make snap
         make snap-clean
 
